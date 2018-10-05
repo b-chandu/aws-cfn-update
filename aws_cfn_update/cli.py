@@ -23,6 +23,7 @@ import pytz
 from aws_cfn_update.container_image_updater import ContainerImageUpdater
 from aws_cfn_update.cron_schedule_expression_updater import CronScheduleExpressionUpdater
 from aws_cfn_update.latest_ami_updater import AMIUpdater
+from aws_cfn_update.rest_api_updater import RestAPIUpdater
 
 
 @click.group()
@@ -74,6 +75,16 @@ def cron_schedule_expression(ctx, timezone, date, path):
         updater.main(tz, date, ctx.obj['dry_run'], ctx.obj['verbose'], list(path))
     except pytz.exceptions.UnknownTimeZoneError as e:
         raise click.BadParameter('invalid timezone specified', ctx=ctx, param='timezone')
+
+@cli.command(name='rest-api', help=RestAPIUpdater.__doc__)
+@click.option('--resource', required=True, help='AWS::ApiGateway::RestApi to update')
+@click.option('--swagger', required=True, type=click.Path(exists=True), help='interface definition')
+@click.option('--extensions', required=True, type=click.Path(exists=True), help='API Gateway extensions')
+@click.argument('template', nargs=1, required=True, type=click.Path(exists=True))
+@click.pass_context
+def swagger_document(ctx, resource, swagger, extensions, template):
+    updater = RestAPIUpdater()
+    updater.main(resource, swagger, extensions, template, ctx.obj['dry_run'], ctx.obj['verbose'])
 
 
 def main():
